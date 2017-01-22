@@ -1,0 +1,19 @@
+{
+  "name": "simplytranslate",
+  "version": "1.0.0",
+  "description": "Simple translation app built as an assignment for Plivo.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/aviraldg/simplytranslate.git"
+  },
+  "author": "Aviral Dasgupta <me@aviraldg.com>",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/aviraldg/simplytranslate/issues"
+  },
+  "homepage": "https://github.com/aviraldg/simplytranslate#readme"
+}
