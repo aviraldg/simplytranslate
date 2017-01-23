@@ -8,9 +8,6 @@ import { gProjectId } from './package.json';
 const api = Router();
 export default api;
 
-if (process.env.GAPI_KEY == null) {
-    throw new Error("GAPI_KEY environment variable not set");
-}
 const translateClient = Translate({ projectId: process.env.GPROJECT_ID || gProjectId, key: process.env.GAPI_KEY });
 
 const TARGET_LANG = 'en';
@@ -23,9 +20,21 @@ const TRANSLATION_NATIVE_TEXT = 'native_text';
 const TRANSLATION_TRANSLATED_TEXT = 'translated_text';
 const TRANSLATION_COLUMNS = [TRANSLATION_ID, TRANSLATION_LANG, TRANSLATION_CREATION_TIMESTAMP, TRANSLATION_NATIVE_TEXT, TRANSLATION_TRANSLATED_TEXT];
 
+function panic(res, reason, e, code = 500) {
+    console.error(e);
+    return res.status(code).send({
+        error: reason
+    });
+}
+
 api.route('/translations')
     .get(async (req, res) => {
-        const translations = await db.all(`SELECT * FROM ${TRANSLATION} ORDER BY ${TRANSLATION_CREATION_TIMESTAMP} DESC, ${TRANSLATION_TRANSLATED_TEXT} ASC`);
+        let translations;
+        try {
+            translations = await db.all(`SELECT * FROM ${TRANSLATION} ORDER BY ${TRANSLATION_CREATION_TIMESTAMP} DESC, ${TRANSLATION_TRANSLATED_TEXT} ASC`);
+        } catch (e) {
+            return panic(res, 'failed to query database', e);
+        }
         
         const xml = xmlbuilder.create('translations');
         translations.forEach(translation => {
@@ -48,22 +57,30 @@ api.route('/translations')
             return;
         }
 
-        const translatedText = (await translateClient.translate(translation[TRANSLATION_NATIVE_TEXT],
+        let translatedText = null;
+        try {
+            translatedText = (await translateClient.translate(translation[TRANSLATION_NATIVE_TEXT],
             {
                 from: translation[TRANSLATION_LANG],
                 to: TARGET_LANG
             }))[0];
         
-        translation[TRANSLATION_TRANSLATED_TEXT] = translatedText;
+            translation[TRANSLATION_TRANSLATED_TEXT] = translatedText;
+        } catch (e) {
+            return panic(res, `failed to translate`, e);
+        }
         
-        const created = await db.run(`INSERT INTO ${TRANSLATION} (${TRANSLATION_CREATION_TIMESTAMP}, ${TRANSLATION_LANG}, ${TRANSLATION_NATIVE_TEXT}, ${TRANSLATION_TRANSLATED_TEXT}) VALUES (DATETIME(), ?, ?, ?)`, [
-            translation[TRANSLATION_LANG],
-            translation[TRANSLATION_NATIVE_TEXT],
-            translation[TRANSLATION_TRANSLATED_TEXT]
-        ]);
+        try {
+            const created = await db.run(`INSERT INTO ${TRANSLATION} (${TRANSLATION_CREATION_TIMESTAMP}, ${TRANSLATION_LANG}, ${TRANSLATION_NATIVE_TEXT}, ${TRANSLATION_TRANSLATED_TEXT}) VALUES (DATETIME(), ?, ?, ?)`, [
+                translation[TRANSLATION_LANG],
+                translation[TRANSLATION_NATIVE_TEXT],
+                translation[TRANSLATION_TRANSLATED_TEXT]
+            ]);
+        } catch (e) {
+            return panic(res, 'failed to save translation to database', e);
+        }
 
-        res.status(201);        
-        res.json({
+        res.status(201).send({
             translation: translatedText
         });
     });
