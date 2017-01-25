@@ -8,6 +8,8 @@ import api from './api';
 
 export const app = express();
 app.use(bodyParser.json())
+  .use(require('morgan')('dev'))
+  .use(require('errorhandler')())
   .use('/api', api)
   .use(express.static('public'))
   .use(express.static('dist'))

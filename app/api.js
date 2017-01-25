@@ -10,6 +10,11 @@ export async function recognizeSpeech(langCode: string, data: Blob, options: {sa
     method: 'POST',
     body: formData
   });
+
+  if(response.error) {
+    throw new Error(response.error);
+  }
+
   return await response.json();
 }
 
@@ -21,6 +26,11 @@ export async function translationsGet() {
       'Accept': 'application/xml'
     }
   });
+
+  if(response.status !== 200) {
+    throw new Error('failed to load history');
+  }
+
   return await response.text();
 }
 
@@ -36,6 +46,11 @@ export async function translationsPost(srcLanguage: string, text: string): ?Tran
       native_text: text
     })
   });
+
+  if(response.error) {
+    throw new Error(response.error);
+  }
+
   const json = await response.json();
   return json;
 }

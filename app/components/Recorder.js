@@ -17,6 +17,7 @@ export default class Recorder extends React.Component {
     super(props);
 
     this.state = {
+      mounted: true,
       recording: false,
       amplitude: 0,
       lang: 'hi-IN',
@@ -29,25 +30,29 @@ export default class Recorder extends React.Component {
     this.data = [];
     this.dataArray = new Float32Array(analyser.frequencyBinCount);
 
-    this.onUserMediaSuccess = this.onUserMediaSuccess.bind(this);
-    this.onUserMediaFailure = this.onUserMediaFailure.bind(this);
-    this.onClick = this.onClick.bind(this);
-    this.updateVisualization = this.updateVisualization.bind(this);
-
     getUserMedia.call(navigator, {
       audio: true
     }, this.onUserMediaSuccess, this.onUserMediaFailure);
   }
 
-  onUserMediaSuccess(stream) {
+  componentDidMount() {
+    this.setState({mounted: true});
+  }
+
+  componentWillUnmount() {
+    this.setState({mounted: false});
+  }
+
+  onUserMediaSuccess = (stream) => {
     this.stream = stream;
-  }
+  };
 
-  onUserMediaFailure() {
+  onUserMediaFailure = () => {
+    alert('Failed to getUserMedia.');
+  };
 
-  }
-
-  updateVisualization() {
+  /* Updates the loudness visualization around the record button */
+  updateVisualization = () => {
     analyser.getFloatTimeDomainData(this.dataArray);
     let total = 0, alpha = 0.7;
     this.dataArray.forEach(value => {
@@ -55,9 +60,14 @@ export default class Recorder extends React.Component {
     });
     this.setState({amplitude: Math.sqrt(total / this.dataArray.length) * (1 - alpha) + this.state.amplitude * alpha});
     this.analyserReq = requestAnimationFrame(this.updateVisualization);
-  }
+  };
 
-  async onClick() {
+  onRecordClicked = async() => {
+    // If we're already loading, ignore this click.
+    if (this.state.nativeStatus === 'loading' || this.state.translatedStatus === 'loading') {
+      return;
+    }
+
     const recording = !this.state.recording;
     const state = {recording};
 
@@ -81,17 +91,7 @@ export default class Recorder extends React.Component {
 
       this.analyserReq = requestAnimationFrame(this.updateVisualization);
     } else {
-      ConcatenateBlobs(this.data, this.data[0].type, async(concatenatedBlob) => {
-        const srcLanguage = this.state.lang;
-        this.setState({nativeStatus: 'loading'});
-        const result = await API.recognizeSpeech(srcLanguage, concatenatedBlob, {
-          sampleRate: audioContext.sampleRate
-        });
-        this.data = [];
-        this.setState({native: result.text, nativeStatus: 'loaded', translatedStatus: 'loading'});
-        const translation = await API.translationsPost(srcLanguage, result.text);
-        this.setState({translated: translation.translated_text, translatedStatus: 'loaded'});
-      });
+      ConcatenateBlobs(this.data, this.data[0].type, this.startTranslation);
 
       try {
         this.mediaRecorder.stop();
@@ -104,7 +104,38 @@ export default class Recorder extends React.Component {
     }
 
     this.setState(state);
-  }
+  };
+
+  /* Actually kicks off the process of transcribing and translating, given a Blob containing audio.
+   The `this.state.mounted &&` chains guard against attempting to set state after we've been unmounted.
+   (fetch/ES6 promises are not cancellable... yet)
+   */
+  startTranslation = async(blob: Blob) => {
+    const srcLanguage = this.state.lang;
+
+    this.state.mounted && this.setState({nativeStatus: 'loading'});
+    let result = null;
+    try {
+      result = await API.recognizeSpeech(srcLanguage, blob, {
+        sampleRate: audioContext.sampleRate
+      });
+
+      this.data = [];
+      this.state.mounted && this.setState({native: result.text, nativeStatus: 'loaded', translatedStatus: 'loading'});
+    } catch(e) {
+      console.error(e);
+      this.state.mounted && this.setState({native: 'Failed to transcribe. Please retry.', nativeStatus: 'error'});
+      return;
+    }
+
+    try {
+      const translation = await API.translationsPost(srcLanguage, result.text);
+      this.state.mounted && this.setState({translated: translation.translated_text, translatedStatus: 'loaded'});
+    } catch(e) {
+      this.state.mounted && this.setState({translated: 'Failed to translate. Please retry.', translatedStatus: 'error'});
+      console.error(e);
+    }
+  };
 
   onLanguageChanged = (event) => {
     this.setState({lang: event.target.value});
@@ -126,7 +157,7 @@ export default class Recorder extends React.Component {
 
     return (
       <div className="Recorder--wrapper">
-        <div className={className} style={style} onClick={this.onClick}>
+        <div className={className} style={style} onClick={this.onRecordClicked}>
           <i className={iconClassName}/>
         </div>
         <div className="Translation">

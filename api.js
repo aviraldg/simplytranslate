@@ -115,6 +115,9 @@ api.post('/recognize/:langCode', upload.single('speech'), async(req, res) => {
     console.log(response);
   } catch (e) {
     console.error(e);
+    res.status(500).send({
+      error: 'Google Speech API call failed'
+    });
   }
 
   res.status(200).send({
