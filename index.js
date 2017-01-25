@@ -7,7 +7,10 @@ import {app} from './server';
 
   process.env.GOOGLE_APPLICATION_CREDENTIALS = process.env.GOOGLE_APPLICATION_CREDENTIALS || `${__dirname}/credentials.json`;
 
-  app.listen(process.env.PORT || 8080, process.env.HOST || '127.0.0.1', () => {
-    console.log('Server started...');
+  const host = process.env.HOST || '127.0.0.1';
+  const port = process.env.PORT || 8080;
+
+  app.listen(port, host, () => {
+    console.log(`Server started... ${host}:${port}`);
   });
 })();

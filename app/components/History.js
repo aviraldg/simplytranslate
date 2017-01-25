@@ -1,5 +1,6 @@
 import React from 'react';
 import _ from 'lodash';
+import classNames from 'class-names';
 
 import './History.scss';
 import TranslationComponent from './Translation';
@@ -9,24 +10,20 @@ import Translation from '../models/Translation';
 
 export default APIConnect(class History extends React.Component {
   render() {
-    if(this.props.api.loading) {
-      return (
-        <div className="History">
-          Loading&hellip;
-        </div>
-      );
-    }
+    const refreshClassNames = classNames('fa fa-refresh fa-2x', {
+      'fa-spin': this.props.api.loading
+    });
 
     return (
       <div className="History">
-        {this.props.api.data.map(translation => {
+        {this.props.api.loading ? null : this.props.api.data.map(translation => {
           return (
             <TranslationComponent key={translation.id} translation={translation} />
           );
         })}
 
-        <div className="History--RefreshButton">
-          <i className="fa fa-refresh fa-2x" aria-hidden="true"></i>
+        <div className="History--RefreshButton" onClick={() => this.props.api.refresh()}>
+          <i className={refreshClassNames} aria-hidden="true"/>
         </div>
       </div>
     );

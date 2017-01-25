@@ -16,14 +16,17 @@ export default function APIConnect(Component: React.Component, fetchFn: () => Pr
       this.refresh();
     }
 
-    async refresh() {
+    refresh = async() => {
+      this.setState({
+        loading: true
+      });
       const data = await fetchFn();
       this.setState({
         data,
         loading: false
       });
       return data;
-    }
+    };
 
     render() {
       return <Component api={{
