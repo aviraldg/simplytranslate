@@ -1,0 +1,21 @@
+html {
+  background: #333;
+  color: #eee;
+  font-family: sans-serif;
+}
+
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.SimplyTranslate {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}

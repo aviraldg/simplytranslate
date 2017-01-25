@@ -1,0 +1,35 @@
+$navbar-height: 48px;
+
+.Navbar {
+  height: $navbar-height;
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  box-shadow: 0 0 $navbar-height/2 rgba(0, 0, 0, 0.4);
+  background: #555;
+  z-index: 100;
+}
+
+.Navbar--Tab {
+  background: #555;
+  flex: 1;
+  text-transform: uppercase;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  border-right: 1px solid grey;
+  transition: 0.4s all ease;
+}
+
+.Navbar--Tab:hover {
+  background: #666;
+}
+
+.Navbar--Tab_active {
+  border-bottom: 4px solid #d3d3d3;
+}
+
+.Navbar--Tab:last-child {
+  border-right: none;
+}

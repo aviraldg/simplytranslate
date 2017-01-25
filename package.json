@@ -4,7 +4,7 @@
   "description": "Simple translation app built as an assignment for Plivo.",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon --exec babel-node index.js",
+    "dev": "nodemon --ignore app/ --ignore public/ --exec babel-node index.js & webpack -w",
     "test": "jest"
   },
   "repository": {
@@ -19,20 +19,36 @@
   "homepage": "https://github.com/aviraldg/simplytranslate#readme",
   "dependencies": {
     "@google-cloud/translate": "^0.6.1",
+    "bluebird": "^3.4.7",
     "body-parser": "^1.16.0",
+    "class-names": "^1.0.0",
     "express": "^4.14.0",
+    "history": "^4.5.1",
+    "isomorphic-fetch": "^2.2.1",
     "lodash": "^4.17.4",
+    "react": "^15.4.2",
+    "react-dom": "^15.4.2",
     "sqlite": "^2.2.4",
     "supertest": "^2.0.1",
     "xmlbuilder": "^8.2.2"
   },
   "devDependencies": {
     "babel-cli": "^6.22.2",
+    "babel-core": "^6.22.1",
     "babel-jest": "^18.0.0",
+    "babel-loader": "^6.2.10",
+    "babel-plugin-transform-class-properties": "^6.22.0",
     "babel-polyfill": "^6.22.0",
     "babel-preset-latest": "^6.22.0",
+    "babel-preset-react": "^6.22.0",
+    "css-loader": "^0.26.1",
     "jest": "^18.1.0",
+    "json-loader": "^0.5.4",
+    "node-sass": "^4.3.0",
     "nodemon": "^1.11.0",
+    "sass-loader": "^4.1.1",
+    "style-loader": "^0.13.1",
+    "webpack": "^1.14.0",
     "xml2js": "^0.4.17"
   },
   "gProjectId": "1050590548026",

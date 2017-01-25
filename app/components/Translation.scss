@@ -1,0 +1,50 @@
+.Translation {
+  width: 100%;
+  max-width: 450px;
+  color: #111;
+  background: #eee;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+
+  margin: 16px auto;
+}
+
+.Translation--Meta, .Translation--En, .Translation--Native {
+  padding: 16px;
+}
+
+.Translation--Native {
+  position: relative;
+}
+
+.Translation--Native:after {
+  bottom: 100%;
+  right: 20px;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
+  pointer-events: none;
+  border-color: rgba(136, 183, 213, 0);
+  border-bottom-color: #d3d3d3;
+  border-width: 8px;
+  margin-left: -8px;
+}
+
+
+.Translation--Native {
+  background: #d3d3d3;
+}
+
+.Translation--Id {
+  display: inline-block;
+  border-radius: 1em;
+  height: 1em;
+  min-width: 1em;
+  padding: 0.2em;
+  font-size: 0.8em;
+  text-align: center;
+  vertical-align: middle;
+  background: #111;
+  color: #eee;
+}

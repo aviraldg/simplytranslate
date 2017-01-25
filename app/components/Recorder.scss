@@ -1,0 +1,62 @@
+$recorder-size: 256px;
+$border-radius: $recorder-size / 2;
+
+.Recorder--wrapper {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+}
+
+@media (orientation: portrait){
+  .Recorder--wrapper {
+    flex-direction: column;
+  }
+}
+
+.Recorder {
+  position: relative;
+  width: $recorder-size;
+  height: $recorder-size;
+  border-radius: $border-radius $border-radius $border-radius $border-radius;
+  background: #ccc;
+  color: #111111;
+  font-size: $recorder-size / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  cursor: pointer;
+  transition: 1s background, transform ease;
+}
+
+.Recorder--wrapper .Translation {
+  margin: 16px;
+  z-index: 10;
+}
+
+.Recorder:hover {
+  background: #eee !important;
+  transform: scale(1.05);
+}
+
+.Recorder:active {
+  background: #fff !important;
+  transform: scale(0.9) !important;
+}
+
+.Recorder_recording {
+  animation: pulse 1s alternate infinite;
+}
+
+@keyframes pulse {
+  from {
+    background: #eee;
+  }
+
+  to {
+    background: #bbb;
+  }
+}

@@ -1,0 +1,23 @@
+.History {
+  flex: 1;
+  width: 100%;
+  overflow-y: scroll;
+}
+
+$refreshbutton-size: 48px;
+
+.History--RefreshButton {
+  position: fixed;
+  background: #777;
+  color: #333;
+  height: $refreshbutton-size;
+  width: $refreshbutton-size;
+  border-radius: $refreshbutton-size;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  bottom: 16px;
+  right: 32px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
