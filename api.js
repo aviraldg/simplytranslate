@@ -2,12 +2,17 @@ import {Router} from "express";
 import db from "sqlite";
 import xmlbuilder from "xmlbuilder";
 import Translate from "@google-cloud/translate";
+import Speech from "@google-cloud/speech";
+
+import {upload} from './common';
 import {gProjectId} from "./package.json";
+import SUPPORTED_LANGUAGES from './langs.json';
 
 const api = Router();
 export default api;
 
 const translateClient = Translate({projectId: process.env.GPROJECT_ID || gProjectId, key: process.env.GAPI_KEY});
+const speechClient = Speech({projectId: process.env.GPROJECT_ID || gProjectId, key: process.env.GAPI_KEY});
 
 const TARGET_LANG = 'en';
 
@@ -58,9 +63,11 @@ api.route('/translations')
 
     let translatedText = null;
     try {
+      // Extracting the first part of the language code works for everything but Chinese, and
+      // the mapping there is not very obvious.
       translatedText = (await translateClient.translate(translation[TRANSLATION_NATIVE_TEXT],
         {
-          from: translation[TRANSLATION_LANG],
+          from: translation[TRANSLATION_LANG].split('-')[0],
           to: TARGET_LANG
         }))[0];
 
@@ -75,16 +82,42 @@ api.route('/translations')
         translation[TRANSLATION_NATIVE_TEXT],
         translation[TRANSLATION_TRANSLATED_TEXT]
       ]);
+
+      const response = Object.assign({}, translation, {
+        id: created.id,
+        translated_text: translatedText
+      });
+      res.status(201).send(response);
     } catch (e) {
       return panic(res, 'failed to save translation to database', e);
     }
-
-    res.status(201).send({
-      translation: translatedText
-    });
   });
 
-// We need to proxy the request to the Google Speech API since it doesn't have a CORS
-api.post('/recognize/:langCode', async(req, res) => {
+api.post('/recognize/:langCode', upload.single('speech'), async(req, res) => {
+  if(!SUPPORTED_LANGUAGES[req.params.langCode]) {
+    res.status(400)
+      .send({
+        error: 'Unsupported language code.'
+      });
+  }
 
+  const data = req.file.buffer;
+
+  let response = [];
+  try {
+    response = await speechClient.recognize({
+      content: data,
+    }, {
+      encoding: 'LINEAR16',
+      sampleRate: +req.param('sampleRate') || 44100,
+      languageCode: req.params.langCode
+    });
+    console.log(response);
+  } catch (e) {
+    console.error(e);
+  }
+
+  res.status(200).send({
+    text: response[0]
+  });
 });

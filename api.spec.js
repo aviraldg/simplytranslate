@@ -64,4 +64,12 @@ describe('/api/', () => {
       });
     });
   });
+  describe('recognize', () => {
+    describe('POST', () => {
+      it('should fail with 400 for an unsupported language code', async() => {
+        await request.post('/api/recognize/unknown')
+          .expect(400);
+      });
+    });
+  });
 });

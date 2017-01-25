@@ -1,6 +1,7 @@
 import React from 'react';
 import classNames from 'class-names';
 import _ from 'lodash';
+import MediaStreamRecorder from 'msr';
 
 import SUPPORTED_LANGUAGES from '../../langs.json';
 import './Recorder.scss';
@@ -16,9 +17,13 @@ export default class Recorder extends React.Component {
     super(props);
 
     this.state = {
-      loading: false,
       recording: false,
-      amplitude: 0
+      amplitude: 0,
+      lang: 'hi-IN',
+      native: 'Once you\'ve recorded audio, it\'ll show up here.',
+      translated: 'And the English equivalent will show up here.',
+      nativeStatus: 'loaded',
+      translatedStatus: 'loaded'
     };
 
     this.data = [];
@@ -60,26 +65,50 @@ export default class Recorder extends React.Component {
       this.data = [];
       this.source = audioContext.createMediaStreamSource(this.stream);
       this.source.connect(analyser);
-      this.mediaRecorder = new MediaRecorder(this.stream);
+      this.mediaRecorder = new MediaStreamRecorder(this.stream);
+      this.mediaRecorder.mimeType = 'audio/wav';
+      this.mediaRecorder.recorderType = class extends MediaStreamRecorder.StereoAudioRecorder {
+        constructor(mediaStream) {
+          super(mediaStream);
+          // The Google Cloud Speech API expects a single channel ONLY.
+          this.audioChannels = 1;
+        }
+      };
       this.mediaRecorder.ondataavailable = (e) => {
-        this.data.push(e.data);
+        this.data.push(e);
       };
       this.mediaRecorder.start();
 
       this.analyserReq = requestAnimationFrame(this.updateVisualization);
     } else {
-      this.mediaRecorder.stop();
+      ConcatenateBlobs(this.data, this.data[0].type, async(concatenatedBlob) => {
+        const srcLanguage = this.state.lang;
+        this.setState({nativeStatus: 'loading'});
+        const result = await API.recognizeSpeech(srcLanguage, concatenatedBlob, {
+          sampleRate: audioContext.sampleRate
+        });
+        this.data = [];
+        this.setState({native: result.text, nativeStatus: 'loaded', translatedStatus: 'loading'});
+        const translation = await API.translationsPost(srcLanguage, result.text);
+        this.setState({translated: translation.translated_text, translatedStatus: 'loaded'});
+      });
+
+      try {
+        this.mediaRecorder.stop();
+      } catch (e) {
+        console.log(e);
+      }
       cancelAnimationFrame(this.analyserReq);
 
       state.amplitude = 0;
-
-      const blob = new Blob(this.data, {type: this.data[0].type});
-      const result = await API.recognizeSpeech('en', blob);
-      console.log(result);
     }
 
     this.setState(state);
   }
+
+  onLanguageChanged = (event) => {
+    this.setState({lang: event.target.value});
+  };
 
   render() {
     const className = classNames('Recorder fa-stack fa-lg', {
@@ -99,22 +128,23 @@ export default class Recorder extends React.Component {
       <div className="Recorder--wrapper">
         <div className={className} style={style} onClick={this.onClick}>
           <i className={iconClassName}/>
-          {this.state.loading ? <i className="fa fa-circle-o-notch fa-2x fa-spin"/> : null}
         </div>
         <div className="Translation">
           <div className="Translation--Meta">
             Translate from:
-            <select style={{float: 'right'}}>
+            <select style={{float: 'right'}} onChange={this.onLanguageChanged} value={this.state.lang}>
               {_.values(SUPPORTED_LANGUAGES).map(lang => {
-                return <option key={lang.code}>{lang.native}</option>
+                return <option value={lang.code} key={lang.code}>{lang.native}</option>
               })}
             </select>
           </div>
           <div className="Translation--Native">
-            Lorem ipsum.
+            {this.state.nativeStatus === 'loading' ?
+              <i className="fa fa-circle-o-notch fa-spin fa-1x fa-fw"/> : this.state.native}
           </div>
           <div className="Translation--En">
-            Lorem ipsum.
+            {this.state.translatedStatus === 'loading' ?
+              <i className="fa fa-circle-o-notch fa-spin fa-1x fa-fw"/> : this.state.translated}
           </div>
         </div>
       </div>

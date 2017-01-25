@@ -1,26 +1,16 @@
 import fetch from 'isomorphic-fetch';
-import Promise from 'bluebird';
 
-const SPEECH_API_URI = 'https://speech.googleapis.com/v1beta1/speech:syncrecognize';
+import Translation from './models/Translation';
 
-export async function recognizeSpeech(langCode: string, data: Blob) {
-  const promise = Promise.defer();
-  const fileReader = new FileReader();
-  fileReader.addEventListener('loadend', () => {
-    promise.resolve(fileReader.result);
-  });
-  fileReader.readAsDataURL(data);
+export async function recognizeSpeech(langCode: string, data: Blob, options: {sampleRate: number}) {
+  const formData = new FormData();
+  formData.append('speech', data);
 
-  const encodedData = await promise;
-  const response = await fetch(`${SPEECH_API_URI}/`, {
+  const response = await fetch(`/api/recognize/${langCode}?sampleRate=${options.sampleRate || 44100}`, {
     method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.GAPI_KEY}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json'
-    },
-    body: encodedData
+    body: formData
   });
+  return await response.json();
 }
 
 export async function translationsGet() {
@@ -32,4 +22,20 @@ export async function translationsGet() {
     }
   });
   return await response.text();
+}
+
+export async function translationsPost(srcLanguage: string, text: string): ?Translation {
+  const response = await fetch(`/api/translations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    },
+    body: JSON.stringify({
+      lang: srcLanguage,
+      native_text: text
+    })
+  });
+  const json = await response.json();
+  return json;
 }
