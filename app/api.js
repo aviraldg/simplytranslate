@@ -51,6 +51,5 @@ export async function translationsPost(srcLanguage: string, text: string): ?Tran
     throw new Error(response.error);
   }
 
-  const json = await response.json();
-  return json;
+  return await response.json();
 }

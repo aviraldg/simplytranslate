@@ -23,7 +23,7 @@ export default APIConnect(class History extends React.Component {
         })}
 
         <div className="History--RefreshButton" onClick={() => this.props.api.refresh()}>
-          <i className={refreshClassNames} aria-hidden="true"/>
+          <i className={refreshClassNames} />
         </div>
       </div>
     );

@@ -1,5 +1,6 @@
 import React from 'react';
 
+/* HOC to make implementing data-fetching components simpler. */
 export default function APIConnect(Component: React.Component, fetchFn: () => Promise<object>) {
   return class extends React.Component {
     static displayName = `APIConnect(${Component.displayName || Component.name})`;

@@ -22,6 +22,7 @@ What Works
 2. Transcribing audio
 3. Translating transcribed audio (Chinese does not work, but it's trivial to fix) to English
 4. Viewing history
+5. Responsive, so it works well and looks good on Android too.
 
 Possible Improvements
 ---

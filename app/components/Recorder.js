@@ -8,6 +8,7 @@ import './Recorder.scss';
 import './Translation.scss';
 import * as API from '../api';
 
+// TODO: Show error message for unsupported browsers? (but that is not a requirement according to doc)
 const audioContext = new (window.AudioContext || window.mozAudioContext || window.webkitAudioContext)();
 const getUserMedia = navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia;
 const analyser = audioContext.createAnalyser();
@@ -17,6 +18,7 @@ export default class Recorder extends React.Component {
     super(props);
 
     this.state = {
+      stream: null,
       mounted: true,
       recording: false,
       amplitude: 0,
@@ -44,11 +46,11 @@ export default class Recorder extends React.Component {
   }
 
   onUserMediaSuccess = (stream) => {
-    this.stream = stream;
+    this.setState({stream});
   };
 
   onUserMediaFailure = () => {
-    alert('Failed to getUserMedia.');
+    // alert('Failed to getUserMedia.');
   };
 
   /* Updates the loudness visualization around the record button */
@@ -73,9 +75,9 @@ export default class Recorder extends React.Component {
 
     if (recording) {
       this.data = [];
-      this.source = audioContext.createMediaStreamSource(this.stream);
+      this.source = audioContext.createMediaStreamSource(this.state.stream);
       this.source.connect(analyser);
-      this.mediaRecorder = new MediaStreamRecorder(this.stream);
+      this.mediaRecorder = new MediaStreamRecorder(this.state.stream);
       this.mediaRecorder.mimeType = 'audio/wav';
       this.mediaRecorder.recorderType = class extends MediaStreamRecorder.StereoAudioRecorder {
         constructor(mediaStream) {
@@ -149,11 +151,22 @@ export default class Recorder extends React.Component {
     const style = {
       boxShadow: `0 0 0 ${Math.round(this.state.amplitude * 128)}px gray`
     };
+    if(this.state.nativeStatus === 'loading' || this.state.translatedStatus === 'loading') {
+      style.cursor = 'not-allowed';
+    }
 
     const iconClassName = classNames("fa fa-stack-1x", {
       "fa-stop": this.state.recording,
       "fa-microphone": !this.state.recording,
     });
+
+    if(this.state.stream == null) {
+      return (
+        <div className="Recorder--wrapper">
+          Please grant access to the microphone.
+        </div>
+      );
+    }
 
     return (
       <div className="Recorder--wrapper">
