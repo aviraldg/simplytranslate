@@ -61,20 +61,22 @@ api.route('/translations')
       return;
     }
 
-    let translatedText = null;
-    try {
-      // Extracting the first part of the language code works for everything but Chinese, and
-      // the mapping there is not very obvious.
-      translatedText = (await translateClient.translate(translation[TRANSLATION_NATIVE_TEXT],
-        {
-          from: translation[TRANSLATION_LANG].split('-')[0],
-          to: TARGET_LANG
-        }))[0];
-
-      translation[TRANSLATION_TRANSLATED_TEXT] = translatedText;
-    } catch (e) {
-      return panic(res, `failed to translate`, e);
+    let translatedText = translation[TRANSLATION_NATIVE_TEXT];
+    if(!translation[TRANSLATION_LANG].startsWith('en')) {
+      try {
+        // Extracting the first part of the language code works for everything but Chinese, and
+        // the mapping there is not very obvious.
+        translatedText = (await translateClient.translate(translation[TRANSLATION_NATIVE_TEXT],
+          {
+            from: translation[TRANSLATION_LANG].split('-')[0],
+            to: TARGET_LANG
+          }))[0];
+      } catch (e) {
+        return panic(res, `failed to translate`, e);
+      }
     }
+
+    translation[TRANSLATION_TRANSLATED_TEXT] = translatedText;
 
     try {
       const created = await db.run(`INSERT INTO ${TRANSLATION} (${TRANSLATION_CREATION_TIMESTAMP}, ${TRANSLATION_LANG}, ${TRANSLATION_NATIVE_TEXT}, ${TRANSLATION_TRANSLATED_TEXT}) VALUES (DATETIME(), ?, ?, ?)`, [
